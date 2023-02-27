@@ -1,7 +1,13 @@
 [package]
 name = "html-to-pulldown-cmark-events"
 version = "0.1.0"
+authors = ["Fangdun Tsai <cfddream@gmail.com>"]
 edition = "2021"
+license = "MIT"
+homepage = "https://github.com/pindash-io"
+documentation = "https://docs.rs/html-to-pulldown-cmark-events"
+repository = "https://github.com/pindash-io/html-to-pulldown-cmark-events"
+description = "Parse HTML to pulldown-cmark's events"
 
 [dependencies]
 atoi = "2.0.0"
