@@ -1,6 +1,6 @@
 [package]
 name = "html-to-pulldown-cmark-events"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Fangdun Tsai <cfddream@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -13,4 +13,4 @@ description = "Parse HTML to pulldown-cmark's events"
 atoi = "2.0.0"
 ego-tree = "0.6.2"
 pulldown-cmark = "0.9.2"
-scraper = { version = "0.14.0", default-features = false }
+scraper = { version = "0.15.0", default-features = false }
