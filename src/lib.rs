@@ -18,7 +18,7 @@ pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
                         let tag = Tag::Heading(level.try_into().unwrap(), None, Vec::new());
                         events.push(Event::Start(tag.clone()));
 
-                        parse_inline(events, node);
+                        parse_inline(events, node, false);
 
                         events.push(Event::End(tag));
                     }
@@ -26,7 +26,7 @@ pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
                         let tag = Tag::Paragraph;
                         events.push(Event::Start(tag.clone()));
 
-                        parse_inline(events, node);
+                        parse_inline(events, node, false);
 
                         events.push(Event::End(tag));
                     }
@@ -60,7 +60,7 @@ pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
                         let tag = Tag::BlockQuote;
                         events.push(Event::Start(tag.clone()));
 
-                        parse_inline(events, node);
+                        parse_inline(events, node, false);
 
                         events.push(Event::End(tag));
                     }
@@ -149,7 +149,7 @@ fn parse_list<'a>(
             let tag = Tag::Item;
             events.push(Event::Start(tag.clone()));
 
-            parse_inline(events, node);
+            parse_inline(events, node, true);
 
             for sub_node in node.children() {
                 // nested list
@@ -171,7 +171,7 @@ fn parse_list<'a>(
     events.push(Event::End(tag));
 }
 
-fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, Node>) {
+fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, Node>, trim: bool) {
     for node in parent.children() {
         match node.value() {
             Node::Element(elem) => {
@@ -221,7 +221,14 @@ fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, N
                     "code" => (
                         node.first_child()
                             .and_then(|node| node.value().as_text())
-                            .map(|text| Event::Code(CowStr::Boxed(text.to_string().into()))),
+                            .map(|text| {
+                                let text = text.to_string();
+                                Event::Code(CowStr::Boxed(if trim {
+                                    text.trim().into()
+                                } else {
+                                    text.into()
+                                }))
+                            }),
                         None,
                     ),
                     // Subscript
@@ -236,13 +243,18 @@ fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, N
                 }
 
                 if let Some(e) = end {
-                    parse_inline(events, node);
+                    parse_inline(events, node, trim);
 
                     events.push(e);
                 }
             }
             Node::Text(Text { text }) if text.trim_end_matches(' ') != CRTL => {
-                events.push(Event::Text(CowStr::Boxed(text.to_string().into())));
+                let text = text.to_string();
+                events.push(Event::Text(CowStr::Boxed(if trim {
+                    text.trim().into()
+                } else {
+                    text.into()
+                })));
             }
             _ => {}
         }
