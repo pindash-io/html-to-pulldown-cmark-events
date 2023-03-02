@@ -149,6 +149,8 @@ fn parse_list<'a>(
             let tag = Tag::Item;
             events.push(Event::Start(tag.clone()));
 
+            parse_inline(events, node);
+
             for sub_node in node.children() {
                 // nested list
                 if let Some(k) = sub_node
@@ -159,8 +161,6 @@ fn parse_list<'a>(
                     .and_then(|name| name.chars().next())
                 {
                     parse_list(events, sub_node, (k == 'o').then_some(0));
-                } else {
-                    parse_inline(events, node);
                 }
             }
 
