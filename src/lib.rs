@@ -6,7 +6,11 @@ const CRTL: &str = "\n";
 pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
     let html = Html::parse_fragment(raw.as_ref());
 
-    for node in html.root_element().children() {
+    parse_block(events, *html.root_element());
+}
+
+fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, Node>) {
+    for node in parent.children() {
         // blocks
         match node.value() {
             Node::Element(elem) => {
@@ -60,7 +64,7 @@ pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
                         let tag = Tag::BlockQuote;
                         events.push(Event::Start(tag.clone()));
 
-                        parse_inline(events, node, false);
+                        parse_block(events, node);
 
                         events.push(Event::End(tag));
                     }
