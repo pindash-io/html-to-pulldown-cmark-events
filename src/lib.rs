@@ -9,7 +9,7 @@ pub fn parser(raw: impl AsRef<str>, events: &mut Vec<Event<'_>>) {
     parse_block(events, *html.root_element());
 }
 
-fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, Node>) {
+fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>) {
     for node in parent.children() {
         // blocks
         match node.value() {
@@ -18,7 +18,7 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
                 match name {
                     "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
                         let level =
-                            atoi::ascii_to_digit::<usize>(name.bytes().nth(1).unwrap()).unwrap();
+                            atoi::ascii_to_digit::<usize>(name.as_bytes()[1]).unwrap();
                         let tag = Tag::Heading(level.try_into().unwrap(), None, Vec::new());
                         events.push(Event::Start(tag.clone()));
 
@@ -37,7 +37,6 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
                     "img" => {
                         let mut attrs = elem
                             .attrs()
-                            .into_iter()
                             .filter(|a| a.0 == "src" || a.0 == "alt")
                             .collect::<Vec<_>>();
 
@@ -72,7 +71,7 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
                         parse_list(
                             events,
                             node,
-                            (name.chars().next() == Some('o')).then_some(0),
+                            name.starts_with('o').then_some(0),
                         );
                     }
                     "br" => {
@@ -83,7 +82,7 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
                     }
                     "pre" => {
                         let mut kind = CodeBlockKind::Indented;
-                        let elem_ref = ElementRef::wrap(node.into()).unwrap();
+                        let elem_ref = ElementRef::wrap(node).unwrap();
                         let mut text = String::new();
                         elem_ref.text().collect::<Vec<_>>().iter().for_each(|s| {
                             text.push_str(s);
@@ -98,7 +97,7 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
                         {
                             // prism
                             kind = k;
-                        } else if elem.classes().find(|name| *name == "highlight").is_some() {
+                        } else if elem.classes().any(|name| name == "highlight") {
                             // highlight
 
                             let selector = Selector::parse("code").unwrap();
@@ -140,9 +139,9 @@ fn parse_block<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, No
     }
 }
 
-fn parse_list<'a>(
+fn parse_list(
     events: &mut Vec<Event<'_>>,
-    parent: ego_tree::NodeRef<'a, Node>,
+    parent: ego_tree::NodeRef<'_, Node>,
     kind: Option<u64>,
 ) {
     let tag = Tag::List(kind);
@@ -175,7 +174,7 @@ fn parse_list<'a>(
     events.push(Event::End(tag));
 }
 
-fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, Node>, trim: bool) {
+fn parse_inline(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>, trim: bool) {
     for node in parent.children() {
         match node.value() {
             Node::Element(elem) => {
@@ -184,11 +183,10 @@ fn parse_inline<'a>(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'a, N
                     "a" => {
                         let mut attrs = elem
                             .attrs()
-                            .into_iter()
                             .filter(|a| a.0 == "href" || a.0 == "title")
                             .collect::<Vec<_>>();
 
-                        attrs.sort_by_key(|attr| attr.0.clone());
+                        attrs.sort_by_key(|attr| attr.0);
 
                         if attrs.is_empty() {
                             continue;
