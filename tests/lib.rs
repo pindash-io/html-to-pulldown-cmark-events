@@ -1,4 +1,3 @@
-use anyhow::Result;
 use html_to_pulldown_cmark_events::parser;
 
 // https://commonmark.org/help/
@@ -24,12 +23,11 @@ use html_to_pulldown_cmark_events::parser;
 // }
 
 #[test]
-fn parse_simple() -> Result<()> {
+fn parse_simple() {
     let content = include_str!("fixtures/simple.html");
 
     let mut events = Vec::new();
     parser(content, &mut events);
 
     dbg!(events);
-    Ok(())
 }

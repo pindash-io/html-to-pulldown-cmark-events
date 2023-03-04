@@ -1,5 +1,8 @@
 use pulldown_cmark::{CodeBlockKind, CowStr, Event, LinkType, Tag};
-use scraper::{node::Text, ElementRef, Html, Node, Selector};
+use scraper::{
+    node::{Element, Text},
+    ElementRef, Html, Node, Selector,
+};
 
 const CRTL: &str = "\n";
 
@@ -17,8 +20,7 @@ fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>)
                 let name = elem.name();
                 match name {
                     "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-                        let level =
-                            atoi::ascii_to_digit::<usize>(name.as_bytes()[1]).unwrap();
+                        let level = atoi::ascii_to_digit::<usize>(name.as_bytes()[1]).unwrap();
                         let tag = Tag::Heading(level.try_into().unwrap(), None, Vec::new());
                         events.push(Event::Start(tag.clone()));
 
@@ -68,11 +70,7 @@ fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>)
                         events.push(Event::End(tag));
                     }
                     "ol" | "ul" => {
-                        parse_list(
-                            events,
-                            node,
-                            name.starts_with('o').then_some(0),
-                        );
+                        parse_list(events, node, name.starts_with('o').then_some(0));
                     }
                     "br" => {
                         events.push(Event::HardBreak);
@@ -81,50 +79,7 @@ fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>)
                         events.push(Event::Rule);
                     }
                     "pre" => {
-                        let mut kind = CodeBlockKind::Indented;
-                        let elem_ref = ElementRef::wrap(node).unwrap();
-                        let mut text = String::new();
-                        elem_ref.text().collect::<Vec<_>>().iter().for_each(|s| {
-                            text.push_str(s);
-                        });
-
-                        if let Some(k) = elem
-                            .classes()
-                            .find_map(|name| name.split_once("language-"))
-                            .map(|(_, lang)| {
-                                CodeBlockKind::Fenced(CowStr::Boxed(lang.to_string().into()))
-                            })
-                        {
-                            // prism
-                            kind = k;
-                        } else if elem.classes().any(|name| name == "highlight") {
-                            // highlight
-
-                            let selector = Selector::parse("code").unwrap();
-
-                            if let Some(code) = elem_ref.select(&selector).next() {
-                                if let Some(k) =
-                                    code.value().attrs().find(|attr| attr.0 == "data-lang").map(
-                                        |(_, lang)| {
-                                            CodeBlockKind::Fenced(CowStr::Boxed(
-                                                lang.to_string().into(),
-                                            ))
-                                        },
-                                    )
-                                {
-                                    kind = k;
-                                }
-                            }
-                        }
-
-                        // TODO: https://shiki.matsu.io/
-
-                        let tag = Tag::CodeBlock(kind);
-                        events.push(Event::Start(tag.clone()));
-
-                        events.push(Event::Text(CowStr::Boxed(text.to_string().into())));
-
-                        events.push(Event::End(tag));
+                        parse_code(events, elem, node);
                     }
                     // "code" => {}
                     // foot
@@ -139,11 +94,49 @@ fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>)
     }
 }
 
-fn parse_list(
-    events: &mut Vec<Event<'_>>,
-    parent: ego_tree::NodeRef<'_, Node>,
-    kind: Option<u64>,
-) {
+fn parse_code(events: &mut Vec<Event<'_>>, elem: &Element, node: ego_tree::NodeRef<'_, Node>) {
+    let mut kind = CodeBlockKind::Indented;
+    let elem_ref = ElementRef::wrap(node).unwrap();
+    let mut text = String::new();
+    elem_ref.text().collect::<Vec<_>>().iter().for_each(|s| {
+        text.push_str(s);
+    });
+
+    if let Some(k) = elem
+        .classes()
+        .find_map(|name| name.split_once("language-"))
+        .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.to_string().into())))
+    {
+        // prism
+        kind = k;
+    } else if elem.classes().any(|name| name == "highlight") {
+        // highlight
+
+        let selector = Selector::parse("code").unwrap();
+
+        if let Some(code) = elem_ref.select(&selector).next() {
+            if let Some(k) = code
+                .value()
+                .attrs()
+                .find(|attr| attr.0 == "data-lang")
+                .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.to_string().into())))
+            {
+                kind = k;
+            }
+        }
+    }
+
+    // TODO: https://shiki.matsu.io/
+
+    let tag = Tag::CodeBlock(kind);
+    events.push(Event::Start(tag.clone()));
+
+    events.push(Event::Text(CowStr::Boxed(text.into())));
+
+    events.push(Event::End(tag));
+}
+
+fn parse_list(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>, kind: Option<u64>) {
     let tag = Tag::List(kind);
     events.push(Event::Start(tag.clone()));
 
@@ -159,7 +152,7 @@ fn parse_list(
                 if let Some(k) = sub_node
                     .value()
                     .as_element()
-                    .map(|elem| elem.name())
+                    .map(Element::name)
                     .filter(|name| *name == "ol" || *name == "ul")
                     .and_then(|name| name.chars().next())
                 {
