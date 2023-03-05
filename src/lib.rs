@@ -105,7 +105,7 @@ fn parse_code(events: &mut Vec<Event<'_>>, elem: &Element, node: ego_tree::NodeR
     if let Some(k) = elem
         .classes()
         .find_map(|name| name.split_once("language-"))
-        .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.to_string().into())))
+        .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim_end().into())))
     {
         // prism
         kind = k;
@@ -119,7 +119,7 @@ fn parse_code(events: &mut Vec<Event<'_>>, elem: &Element, node: ego_tree::NodeR
                 .value()
                 .attrs()
                 .find(|attr| attr.0 == "data-lang")
-                .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.to_string().into())))
+                .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim().into())))
             {
                 kind = k;
             }
