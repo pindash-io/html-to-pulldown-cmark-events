@@ -156,7 +156,7 @@ fn parse_list(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>, 
                     .filter(|name| *name == "ol" || *name == "ul")
                     .and_then(|name| name.chars().next())
                 {
-                    parse_list(events, sub_node, (k == 'o').then_some(0));
+                    parse_list(events, sub_node, (k == 'o').then_some(1));
                 }
             }
 
