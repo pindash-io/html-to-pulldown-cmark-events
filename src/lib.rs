@@ -70,7 +70,7 @@ fn parse_block(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>)
                         events.push(Event::End(tag));
                     }
                     "ol" | "ul" => {
-                        parse_list(events, node, name.starts_with('o').then_some(0));
+                        parse_list(events, node, name.starts_with('o').then_some(1));
                     }
                     "br" => {
                         events.push(Event::HardBreak);
