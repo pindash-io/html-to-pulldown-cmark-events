@@ -243,13 +243,10 @@ fn parse_inline(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>
                     events.push(e);
                 }
             }
-            Node::Text(Text { text }) if text.trim_end_matches(' ') != CRTL => {
-                let text = text.to_string();
-                events.push(Event::Text(CowStr::Boxed(if trim {
-                    text.trim().into()
-                } else {
-                    text.into()
-                })));
+            Node::Text(Text { text }) => {
+                events.push(Event::Text(CowStr::Boxed(
+                    text.to_string().into()
+                )));
             }
             _ => {}
         }
