@@ -194,6 +194,7 @@ fn parse_inline(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>
                             },
                         );
 
+
                         let tag = Tag::Link(LinkType::Inline, href.into(), title.into());
                         (Some(Event::Start(tag.clone())), Some(Event::End(tag)))
                     }
@@ -243,7 +244,7 @@ fn parse_inline(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>
                     events.push(e);
                 }
             }
-            Node::Text(Text { text }) => {
+            Node::Text(Text { text }) if text.trim_end_matches(' ') != CRTL => {
                 events.push(Event::Text(CowStr::Boxed(
                     text.to_string().into()
                 )));
