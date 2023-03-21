@@ -1,6 +1,6 @@
 [package]
 name = "html-to-pulldown-cmark-events"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["Fangdun Tsai <cfddream@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -16,4 +16,4 @@ pulldown-cmark = "0.9.2"
 scraper = { version = "0.15.0", default-features = false }
 
 [dev-dependencies]
-anyhow = "1.0.69"
+anyhow = "1.0.70"

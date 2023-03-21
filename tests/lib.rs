@@ -31,3 +31,13 @@ fn parse_simple() {
 
     dbg!(events);
 }
+
+#[test]
+fn parse_escape() {
+    let content = include_str!("fixtures/haskellweekly.html");
+
+    let mut events = Vec::new();
+    parser(content, &mut events);
+
+    dbg!(events);
+}
