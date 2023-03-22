@@ -43,7 +43,7 @@ fn parse_escape() {
 }
 
 #[test]
-fn parse_blog_rust_lang() {
+fn parse_blog_rust_lang_org() {
     let content = include_str!("fixtures/blog.rust-lang.org.html");
 
     let mut events = Vec::new();

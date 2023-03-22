@@ -106,23 +106,27 @@ fn parse_code(events: &mut Vec<Event<'_>>, elem: &Element, node: ego_tree::NodeR
         .classes()
         .find_map(|name| name.split_once("language-"))
         .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim_end().into())))
-    {
-        // prism
-        kind = k;
-    } else if elem.classes().any(|name| name == "highlight") {
-        // highlight
-
-        let selector = Selector::parse("code").unwrap();
-
-        if let Some(code) = elem_ref.select(&selector).next() {
-            if let Some(k) = code
-                .value()
-                .attrs()
+        .or_else(|| {
+            elem.attrs()
                 .find(|attr| attr.0 == "data-lang")
                 .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim().into())))
-            {
-                kind = k;
-            }
+        })
+    {
+        kind = k;
+    } else {
+        let selector = Selector::parse("code").unwrap();
+        if let Some(k) = elem_ref.select(&selector).next().and_then(|e| {
+            let elem = e.value();
+            elem.classes()
+                .find_map(|name| name.split_once("language-"))
+                .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim_end().into())))
+                .or_else(|| {
+                    elem.attrs()
+                        .find(|attr| attr.0 == "data-lang")
+                        .map(|(_, lang)| CodeBlockKind::Fenced(CowStr::Boxed(lang.trim().into())))
+                })
+        }) {
+            kind = k;
         }
     }
 
@@ -217,7 +221,7 @@ fn parse_list(events: &mut Vec<Event<'_>>, parent: ego_tree::NodeRef<'_, Node>, 
                             }
                             // "code" => {}
                             // foot
-                            k @ _ => {
+                            k => {
                                 let (start, end) = match k {
                                     // Link
                                     "a" => {
