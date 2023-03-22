@@ -41,3 +41,13 @@ fn parse_escape() {
 
     dbg!(events);
 }
+
+#[test]
+fn parse_blog_rust_lang() {
+    let content = include_str!("fixtures/blog.rust-lang.org.html");
+
+    let mut events = Vec::new();
+    parser(content, &mut events);
+
+    dbg!(events);
+}
