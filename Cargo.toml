@@ -1,6 +1,6 @@
 [package]
 name = "html-to-pulldown-cmark-events"
-version = "0.1.10"
+version = "0.1.11"
 authors = ["Fangdun Tsai <cfddream@gmail.com>"]
 edition = "2021"
 license = "MIT"
